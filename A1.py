@@ -3,6 +3,9 @@ import numpy as np
 import pandas as pd 
 import openpyxl
 import matplotlib.pyplot as plt
+from sklearn.linear_model import LinearRegression
+import statsmodels.api as sm
+from scipy.stats import f
 #%%
 data_returns=pd.read_excel('25_Portfolios_5x5_Wout_Div.xlsx', sheet_name='Double Sort Jun', index_col=None)
 data_canvas=pd.read_excel('Data_Assignment_SMALLER.xlsx', sheet_name='FamaFrench Factors', index_col=None)
@@ -109,12 +112,16 @@ for mu_targ in values_targ:
     std=(pi_mv_riskless(adjusted_returns, mu_targ).T@adjusted_returns.cov()@pi_mv_riskless(adjusted_returns,mu_targ))**0.5
     mu_riskless_mv.append(mu)
     vol_riskless_mv.append(std)
-    
+   
+""" mu_tang=pi_tang(adjusted_returns)@Mu(adjusted_returns)
+vol_tang=(pi_tang(adjusted_returns).T@adjusted_returns.cov()@pi_tang(adjusted_returns))**0.5
+ """
 # %%
 #Plotting mean-variance frontier
 plt.figure(figsize=(10, 6)) 
 plt.plot(vol_mv, mu_mv, color='blue', linestyle='-')
 plt.plot(vol_riskless_mv, mu_riskless_mv, color='red', linestyle='-')
+#plt.scatter(vol_tang,mu_tang, color='g',marker='o', s=100, label='Tangency portfolios')
 plt.title('Mean-variance frontier with riskless assets')
 plt.xlabel('volatility')
 plt.ylabel('mu')
@@ -123,4 +130,28 @@ plt.legend()
 
 #%%
 #A.1 5 Regression 
+alpha_hat=list()
+residual_hat=np.zeros(data_returns.shape)
+for i, var in enumerate(adjusted_returns.columns[:-1]):
+    X=sm.add_constant(adjusted_returns[var])
+    model=sm.OLS(adjusted_returns['Market'],X).fit()
+    print('Coefficient: \n', model.params)
+    print('Standard Error: \n', model.bse)
+    print('Residuals: \n', model.resid)
+    alpha_hat.append(model.params['const'])
+    residual_hat[:,i]=model.resid
 
+#%%
+#A.1 6 
+T=data_returns.shape[0]
+n=data_returns.shape[1]
+sigma_hat=residual_hat.T@residual_hat/(T-2)
+alpha_hat=np.array(alpha_hat)
+X=adjusted_returns.drop(columns=['Market'])
+X=np.column_stack((np.ones(len(X)), X))
+q_11=np.linalg.inv(X.T@X)[0,0]
+
+z=(T-n-1)*alpha_hat.T@np.linalg.inv(sigma_hat)@alpha_hat/n*(T-2)*q_11
+
+p_value=1-f.cdf(z,n,T-n-1)
+#reject H0, CAPM doesn't hold
