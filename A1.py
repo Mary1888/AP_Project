@@ -69,21 +69,56 @@ def pi_mv_new(returns, lam):
 # %%
 values_targ=np.arange(-2,2,0.01)
 mu_mv=list()
-var_mv=list()
+vol_mv=list()
 for mu_targ in values_targ:
     mu=pi_mv(adjusted_returns, mu_targ).T@Mu(adjusted_returns)
-    variance=pi_mv(adjusted_returns, mu_targ).T@np.linalg.inv(adjusted_returns.cov())@pi_mv(adjusted_returns,mu_targ)
+    std=(pi_mv(adjusted_returns, mu_targ).T@adjusted_returns.cov()@pi_mv(adjusted_returns,mu_targ))**0.5
     mu_mv.append(mu)
-    var_mv.append(variance)
+    vol_mv.append(std)
     
 # %%
 #Plotting mean-variance frontier
 plt.figure(figsize=(10, 6)) 
-plt.plot(var_mv, mu_mv, color='blue', linestyle='-')
-plt.title('Plot')
+plt.plot(vol_mv, mu_mv, color='blue', linestyle='-')
+plt.title('Mean-variance frontier without riskless assets')
 plt.xlabel('volatility')
 plt.ylabel('mu')
 plt.legend()
 
 #%%
 #A.1 4 Mean-vairance frontier with riskless assets
+#Tangency portfolio 
+def pi_mv_riskless(returns,mu_targ):
+    mu=Mu(returns,0)
+    sigma_inv=np.linalg.inv(returns.cov())
+    Pi_mu=mu_targ*sigma_inv@mu/(mu.T@sigma_inv@mu)
+    return Pi_mu
+
+def pi_tang(returns):
+    mu=Mu(returns,0)
+    sigma_inv=np.linalg.inv(returns.cov())
+    vec_1=np.ones(len(mu))
+    Pi_tang=sigma_inv@mu/(vec_1.T@sigma_inv@mu)
+    return Pi_tang
+# %%
+values_targ=np.arange(-2,2,0.01)
+mu_riskless_mv=list()
+vol_riskless_mv=list()
+for mu_targ in values_targ:
+    mu=pi_mv_riskless(adjusted_returns, mu_targ).T@Mu(adjusted_returns)
+    std=(pi_mv_riskless(adjusted_returns, mu_targ).T@adjusted_returns.cov()@pi_mv_riskless(adjusted_returns,mu_targ))**0.5
+    mu_riskless_mv.append(mu)
+    vol_riskless_mv.append(std)
+    
+# %%
+#Plotting mean-variance frontier
+plt.figure(figsize=(10, 6)) 
+plt.plot(vol_mv, mu_mv, color='blue', linestyle='-')
+plt.plot(vol_riskless_mv, mu_riskless_mv, color='red', linestyle='-')
+plt.title('Mean-variance frontier with riskless assets')
+plt.xlabel('volatility')
+plt.ylabel('mu')
+plt.legend()
+
+
+
