@@ -4,8 +4,8 @@ import pandas as pd
 import openpyxl
 import matplotlib.pyplot as plt
 #%%
-data_returns=pd.read_excel('C:/Users/75590/Desktop/BSC2/Master/Asset pricing/AP_Project/25_Portfolios_5x5_Wout_Div.xlsx', sheet_name='Double Sort Jun', index_col=None)
-data_canvas=pd.read_excel('C:/Users/75590/Desktop/BSC2/Master/Asset pricing/AP_Project/Data_Assignment_SMALLER.xlsx', sheet_name='FamaFrench Factors', index_col=None)
+data_returns=pd.read_excel('25_Portfolios_5x5_Wout_Div.xlsx', sheet_name='Double Sort Jun', index_col=None)
+data_canvas=pd.read_excel('Data_Assignment_SMALLER.xlsx', sheet_name='FamaFrench Factors', index_col=None)
 
 #196309-202110 
 data_returns=data_returns[(data_returns['Date']<=202110) &  (data_returns['Date']>=196309)]
@@ -121,4 +121,6 @@ plt.ylabel('mu')
 plt.legend()
 
 
+#%%
+#A.1 5 Regression 
 
