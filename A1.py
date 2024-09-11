@@ -27,9 +27,12 @@ variance_size_value=adjusted_returns.var()
 corr_size_value=adjusted_returns.corr()
 # %%
 # A.1 3 Mean-variance frontier
+#mu
+def Mu(returns,rf=0.15):
+    return returns.mean()+rf
 # lambda  
 def Lambda(returns, mu_targ):
-    mu=returns.mean()+0.15
+    mu=Mu(returns)
     sigma=returns.cov()
     sigma_inv=np.linalg.inv(sigma)
     vec_1=np.ones(len(mu))
@@ -49,7 +52,7 @@ def pi_mu(returns):
     sigma=returns.cov()
     vec_1=np.ones(26)
     sigma_inv=np.linalg.inv(sigma)
-    mu=returns.mean()+0.15
+    mu=Mu(returns)
     return sigma_inv@mu/(mu.T@sigma_inv@vec_1)
 
 def pi_mv(returns, mu_targ):
@@ -63,13 +66,14 @@ def pi_mv_new(returns, lam):
     Pi_mu=pi_mu(returns)
     return lam*Pi_mu+(1-lam)*Pi_gmv
 
+
 # %%
-values_targ=np.arange(-2,2,0.001)
+values_targ=np.arange(-2,2,0.01)
 mu_mv=list()
 var_mv=list()
 for mu_targ in values_targ:
-    mu=pi_mv(adjusted_returns, mu_targ).mean()
-    variance=pi_mv(adjusted_returns, mu_targ).var()
+    mu=pi_mv(adjusted_returns, mu_targ).T@Mu(adjusted_returns)
+    variance=pi_mv(adjusted_returns, mu_targ).T@np.linalg.inv(adjusted_returns.cov())@pi_mv(adjusted_returns,mu_targ)
     mu_mv.append(mu)
     var_mv.append(variance)
     
@@ -82,3 +86,6 @@ plt.xlabel('volatility')
 plt.ylabel('mu')
 plt.legend()
 
+#%%
+data_returns
+# %%
