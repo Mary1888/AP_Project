@@ -26,7 +26,7 @@ mean_size_value=adjusted_returns.mean()
 variance_size_value=adjusted_returns.var()
 corr_size_value=adjusted_returns.corr()
 # %%
-# A.1 3 Mean-variance frontier
+# A.1 3 Mean-variance frontier without riskless assets
 #mu
 def Mu(returns,rf=0.15):
     return returns.mean()+rf
@@ -66,7 +66,6 @@ def pi_mv_new(returns, lam):
     Pi_mu=pi_mu(returns)
     return lam*Pi_mu+(1-lam)*Pi_gmv
 
-
 # %%
 values_targ=np.arange(-2,2,0.01)
 mu_mv=list()
@@ -87,5 +86,4 @@ plt.ylabel('mu')
 plt.legend()
 
 #%%
-data_returns
-# %%
+#A.1 4 Mean-vairance frontier with riskless assets
