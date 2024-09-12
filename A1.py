@@ -70,7 +70,7 @@ def pi_mv_new(returns, lam):
     return lam*Pi_mu+(1-lam)*Pi_gmv
 
 # %%
-values_targ=np.arange(-2,2,0.01)
+values_targ=np.arange(-10,10,0.01)
 mu_mv=list()
 vol_mv=list()
 for mu_targ in values_targ:
@@ -104,7 +104,7 @@ def pi_tang(returns):
     Pi_tang=sigma_inv@mu/(vec_1.T@sigma_inv@mu)
     return Pi_tang
 # %%
-values_targ=np.arange(-2,2,0.01)
+values_targ=np.arange(-10,10,0.01)
 mu_riskless_mv=list()
 vol_riskless_mv=list()
 for mu_targ in values_targ:
