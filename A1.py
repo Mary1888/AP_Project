@@ -113,15 +113,15 @@ for mu_targ in values_targ:
     mu_riskless_mv.append(mu)
     vol_riskless_mv.append(std)
    
-""" mu_tang=pi_tang(adjusted_returns)@Mu(adjusted_returns)
+mu_tang=pi_tang(adjusted_returns)@Mu(adjusted_returns)
 vol_tang=(pi_tang(adjusted_returns).T@adjusted_returns.cov()@pi_tang(adjusted_returns))**0.5
- """
+
 # %%
 #Plotting mean-variance frontier
 plt.figure(figsize=(10, 6)) 
 plt.plot(vol_mv, mu_mv, color='blue', linestyle='-')
 plt.plot(vol_riskless_mv, mu_riskless_mv, color='red', linestyle='-')
-#plt.scatter(vol_tang,mu_tang, color='g',marker='o', s=100, label='Tangency portfolios')
+plt.scatter(vol_tang,mu_tang, color='g',marker='o', s=100, label='Tangency portfolios')
 plt.title('Mean-variance frontier with riskless assets')
 plt.xlabel('volatility')
 plt.ylabel('mu')
