@@ -7,6 +7,7 @@ from sklearn.linear_model import LinearRegression
 import statsmodels.api as sm
 from scipy.stats import f
 from scipy import stats
+import seaborn
 #%%
 ######################################### A1 ################################################################
 data_returns=pd.read_excel('25_Portfolios_5x5_Wout_Div.xlsx', sheet_name='Avg Mon Value Weighted', index_col=None)
@@ -30,6 +31,10 @@ adjusted_returns['Market']=market_port
 mean_size_value=adjusted_returns.mean()
 variance_size_value=adjusted_returns.var()
 corr_size_value=adjusted_returns.corr()
+#heatmap for correlation 
+plt.figure(figsize=(8, 6))
+seaborn.heatmap(corr_size_value, annot=False, cmap='YlGnBu')
+plt.show()
 # %%
 # A.1 3 Mean-variance frontier without riskless assets
 #mu
