@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 import statsmodels.api as sm
 from scipy.stats import f
+from scipy import stats
 #%%
 ######################################### A1 ################################################################
 data_returns=pd.read_excel('25_Portfolios_5x5_Wout_Div.xlsx', sheet_name='Avg Mon Value Weighted', index_col=None)
@@ -230,3 +231,5 @@ plt.legend()
 
 # %%
 #A.3.3 Fama-MacBeth Step 2 
+mean_slope=slope_df['Slope'].mean()
+t_statistic, p_value = stats.ttest_1samp(slope_df['Slope'], 0)
