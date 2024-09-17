@@ -201,6 +201,32 @@ p_value=1-f.cdf(z,n,T-n-1)
 #%% 
 ##################################### A3 ###########################
 #%%
-#A.3.1 
+#A.3.1 Momentum t-12 to t-2
 cumulative_returns = ((data_returns/100).shift(2) + 1).rolling(window=11).apply(lambda x: x.prod() - 1, raw=True)
 cumulative_returns=cumulative_returns*100
+
+
+#%%
+#A.3.2 Fama-MacBeth Step 1
+port_returns=adjusted_returns.drop(columns=['Market','SMB'])
+slope=[]
+for i in range(12,len(cumulative_returns)):
+    X=cumulative_returns.iloc[i].values
+    y=port_returns.iloc[i].values
+    X=sm.add_constant(X)
+    model=sm.OLS(y,X).fit()
+    slope.append(float(model.params[1:]))
+
+# %%
+slope_df=cumulative_returns[12:]
+slope_df['Slope']=slope
+#Plot of the slope over time
+plt.figure(figsize=(10, 6)) 
+plt.plot(pd.to_datetime(slope_df.index, format='%Y%m'),slope_df['Slope'], color='blue', linestyle='-')
+plt.title('Slope coefficients from the cross-sectional regression')
+plt.xlabel('Time')
+plt.ylabel('Slope coefficient')
+plt.legend()
+
+# %%
+#A.3.3 Fama-MacBeth Step 2 
