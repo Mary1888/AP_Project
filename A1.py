@@ -7,6 +7,7 @@ from sklearn.linear_model import LinearRegression
 import statsmodels.api as sm
 from scipy.stats import f
 #%%
+######################################### A1 ################################################################
 data_returns=pd.read_excel('25_Portfolios_5x5_Wout_Div.xlsx', sheet_name='Avg Mon Value Weighted', index_col=None)
 data_canvas=pd.read_excel('Data_Assignment_SMALLER.xlsx', sheet_name='FamaFrench Factors', index_col=None)
 
@@ -142,7 +143,7 @@ for i, var in enumerate(adjusted_returns.columns[:-1]):
     residual_hat[:,i]=model.resid
 
 #%%
-#A.1 6 
+#A.1 6 GRS
 T=data_returns.shape[0]
 n=data_returns.shape[1]
 sigma_hat=residual_hat.T@residual_hat/(T-2)
@@ -155,3 +156,44 @@ z=(T-n-1)*alpha_hat.T@np.linalg.inv(sigma_hat)@alpha_hat/n*(T-2)*q_11
 
 p_value=1-f.cdf(z,n,T-n-1)
 #reject H0, CAPM doesn't hold
+
+# %%
+####################################### A2 ##########################################
+#A.2.1 Size portfolio Small-Big
+size_data=pd.read_excel('Data_Assignment_SMALLER.xlsx', sheet_name='Size portfolios', index_col=None)
+size_data.set_index('Date', inplace=True)
+size_port=size_data['Lo 10']-size_data['Hi 10']-rf
+mean_SMB=size_port.mean()
+var_SMB=size_port.var()
+#%%
+#A.2.2 Regression 
+adjusted_returns['SMB']=size_port
+X=sm.add_constant(adjusted_returns['SMB'])
+model=sm.OLS(adjusted_returns['Market'],X).fit()
+print('Coefficient: \n', model.params)
+print('Standard Error: \n', model.bse)
+print('Residuals: \n', model.resid)
+
+#%%
+#A.2.3 GRS
+alpha_hat=list()
+residual_hat=np.zeros(data_returns.shape)
+for i, var in enumerate(adjusted_returns.columns[:-2]):
+    X=sm.add_constant(adjusted_returns[var])
+    model=sm.OLS(adjusted_returns['SMB'],X).fit()
+    print('Coefficient: \n', model.params)
+    print('Standard Error: \n', model.bse)
+    print('Residuals: \n', model.resid)
+    alpha_hat.append(model.params['const'])
+    residual_hat[:,i]=model.resid
+
+T=data_returns.shape[0]
+n=data_returns.shape[1]
+sigma_hat=residual_hat.T@residual_hat/(T-2)
+alpha_hat=np.array(alpha_hat)
+X=adjusted_returns.drop(columns=['Market','SMB'])
+X=np.column_stack((np.ones(len(X)), X))
+q_11=np.linalg.inv(X.T@X)[0,0]
+z=(T-n-1)*alpha_hat.T@np.linalg.inv(sigma_hat)@alpha_hat/n*(T-2)*q_11
+p_value=1-f.cdf(z,n,T-n-1)  
+    
