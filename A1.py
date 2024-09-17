@@ -197,3 +197,10 @@ q_11=np.linalg.inv(X.T@X)[0,0]
 z=(T-n-1)*alpha_hat.T@np.linalg.inv(sigma_hat)@alpha_hat/n*(T-2)*q_11
 p_value=1-f.cdf(z,n,T-n-1)  
     
+    
+#%% 
+##################################### A3 ###########################
+#%%
+#A.3.1 
+cumulative_returns = ((data_returns/100).shift(2) + 1).rolling(window=11).apply(lambda x: x.prod() - 1, raw=True)
+cumulative_returns=cumulative_returns*100
