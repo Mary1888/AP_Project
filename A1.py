@@ -43,7 +43,7 @@ def Mu(returns,rf=0.15):
 # lambda  
 def Lambda(returns, mu_targ):
     mu=Mu(returns)
-    sigma=returns.cov()
+    sigma=returns.cov() 
     sigma_inv=np.linalg.inv(sigma)
     vec_1=np.ones(len(mu))
     B=mu.T@sigma_inv@vec_1
