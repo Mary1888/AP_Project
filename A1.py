@@ -210,7 +210,6 @@ p_value=1-f.cdf(z,n,T-n-k)
 cumulative_returns = ((data_returns/100).shift(2) + 1).rolling(window=11).apply(lambda x: x.prod() - 1, raw=True)
 cumulative_returns=cumulative_returns*100
 
-
 #%%
 #A.3.2 Fama-MacBeth Step 1
 port_returns=adjusted_returns.drop(columns=['Market','SMB'])
@@ -222,7 +221,6 @@ for i in range(12,len(cumulative_returns)):
     model=sm.OLS(y,X).fit()
     slope.append(float(model.params[1:]))
 
-# %%
 slope_df=cumulative_returns[12:]
 slope_df['Slope']=slope
 #Plot of the slope over time
