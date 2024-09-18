@@ -140,8 +140,8 @@ plt.legend()
 alpha_hat=list()
 residual_hat=np.zeros(data_returns.shape)
 for i, var in enumerate(adjusted_returns.columns[:-1]):
-    X=sm.add_constant(adjusted_returns[var])
-    model=sm.OLS(adjusted_returns['Market'],X).fit()
+    X=sm.add_constant(adjusted_returns['Market'])
+    model=sm.OLS(adjusted_returns[var],X).fit()
     print('Coefficient: \n', model.params)
     print('Standard Error: \n', model.bse)
     print('Residuals: \n', model.resid)
@@ -154,8 +154,7 @@ T=data_returns.shape[0]
 n=data_returns.shape[1]
 sigma_hat=residual_hat.T@residual_hat/(T-2)
 alpha_hat=np.array(alpha_hat)
-X=adjusted_returns.drop(columns=['Market'])
-X=np.column_stack((np.ones(len(X)), X))
+X=np.column_stack((np.ones(len(X)), adjusted_returns['Market']))
 q_11=np.linalg.inv(X.T@X)[0,0]
 
 z=(T-n-1)*alpha_hat.T@np.linalg.inv(sigma_hat)@alpha_hat/n*(T-2)*q_11
@@ -168,14 +167,14 @@ p_value=1-f.cdf(z,n,T-n-1)
 #A.2.1 Size portfolio Small-Big
 size_data=pd.read_excel('Data_Assignment_SMALLER.xlsx', sheet_name='Size portfolios', index_col=None)
 size_data.set_index('Date', inplace=True)
-size_port=size_data['Lo 10']-size_data['Hi 10']-rf
+size_port=size_data['Lo 10']-size_data['Hi 10']
 mean_SMB=size_port.mean()
 var_SMB=size_port.var()
 #%%
 #A.2.2 Regression 
 adjusted_returns['SMB']=size_port
-X=sm.add_constant(adjusted_returns['SMB'])
-model=sm.OLS(adjusted_returns['Market'],X).fit()
+X=sm.add_constant(adjusted_returns['Market'])
+model=sm.OLS(adjusted_returns['SMB'],X).fit()
 print('Coefficient: \n', model.params)
 print('Standard Error: \n', model.bse)
 print('Residuals: \n', model.resid)
@@ -185,23 +184,23 @@ print('Residuals: \n', model.resid)
 alpha_hat=list()
 residual_hat=np.zeros(data_returns.shape)
 for i, var in enumerate(adjusted_returns.columns[:-2]):
-    X=sm.add_constant(adjusted_returns[var])
-    model=sm.OLS(adjusted_returns['SMB'],X).fit()
+    X=sm.add_constant(adjusted_returns[['Market','SMB']])
+    model=sm.OLS(adjusted_returns[var],X).fit()
     print('Coefficient: \n', model.params)
     print('Standard Error: \n', model.bse)
     print('Residuals: \n', model.resid)
     alpha_hat.append(model.params['const'])
     residual_hat[:,i]=model.resid
-
+k=2
 T=data_returns.shape[0]
 n=data_returns.shape[1]
-sigma_hat=residual_hat.T@residual_hat/(T-2)
+sigma_hat=residual_hat.T@residual_hat/T
 alpha_hat=np.array(alpha_hat)
-X=adjusted_returns.drop(columns=['Market','SMB'])
-X=np.column_stack((np.ones(len(X)), X))
-q_11=np.linalg.inv(X.T@X)[0,0]
-z=(T-n-1)*alpha_hat.T@np.linalg.inv(sigma_hat)@alpha_hat/n*(T-2)*q_11
-p_value=1-f.cdf(z,n,T-n-1)  
+factors=adjusted_returns[['Market','SMB']]
+mu_fa=factors.mean()
+var_fa=factors.cov()
+z=(T-n-k)*alpha_hat.T@np.linalg.inv(sigma_hat)@alpha_hat/(n*mu_fa.T@np.linalg.inv(var_fa)@mu_fa)
+p_value=1-f.cdf(z,n,T-n-k)  
     
     
 #%% 
