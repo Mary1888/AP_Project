@@ -199,10 +199,10 @@ alpha_hat=np.array(alpha_hat)
 factors=adjusted_returns[['Market','SMB']]
 mu_fa=factors.mean()
 var_fa=factors.cov()
-z=(T-n-k)*alpha_hat.T@np.linalg.inv(sigma_hat)@alpha_hat/(n*mu_fa.T@np.linalg.inv(var_fa)@mu_fa)
+z=(T-n-k)*alpha_hat.T@np.linalg.inv(sigma_hat)@alpha_hat/(n*(1+mu_fa.T@np.linalg.inv(var_fa)@mu_fa))
 p_value=1-f.cdf(z,n,T-n-k)  
     
-    
+
 #%% 
 ##################################### A3 ###########################
 #%%
