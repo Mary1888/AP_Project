@@ -77,6 +77,8 @@ def pi_mv_new(returns, lam):
     return lam*Pi_mu+(1-lam)*Pi_gmv
 
 # %%
+pi_mu(adjusted_returns)
+#%%
 values_targ=np.arange(-10,10,0.01)
 mu_mv=list()
 vol_mv=list()
@@ -235,3 +237,7 @@ plt.legend()
 #A.3.3 Fama-MacBeth Step 2 
 mean_slope=slope_df['Slope'].mean()
 t_statistic, p_value = stats.ttest_1samp(slope_df['Slope'], 0)
+
+
+#%%
+#A.4.1 PCA scree plot
