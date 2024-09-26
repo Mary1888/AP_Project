@@ -241,3 +241,37 @@ t_statistic, p_value = stats.ttest_1samp(slope_df['Slope'], 0)
 
 #%%
 #A.4.1 PCA scree plot
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+
+data_train=pd.read_csv('train.csv', index_col=None)
+y_train=data_train['target']
+X_train=data_train.drop(columns=['target'])
+
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X_train)
+# Apply PCA
+pca = PCA()
+pca.fit(X_scaled)
+
+explained_variance_ratio = pca.explained_variance_ratio_
+cumulative_variance = np.cumsum(explained_variance_ratio)
+#Adjust for percentage of variance retained 
+confidence_level=0.9
+plt.plot(range(1, len(cumulative_variance) + 1), cumulative_variance, marker='o')
+plt.xlabel('Number of Principal Components')
+plt.ylabel('Cumulative Explained Variance')
+plt.axhline(y=confidence_level, color='r', linestyle='--')  # 90% threshold line
+plt.show()
+
+n_components = np.argmax(cumulative_variance >= confidence_level) + 1
+print(f'Number of components to retain 90% variance: {n_components}')
+
+pca = PCA(n_components=n_components)
+principal_components = pca.fit_transform(X_scaled)
+pca_df = pd.DataFrame(data=principal_components, columns= [f'PC{i+1}' for i in range(n_components)])
+print(pca_df)
