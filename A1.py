@@ -26,8 +26,10 @@ rf=data_canvas['RF']
 adjusted_returns = data_returns.subtract(rf, axis=0)
 # %%
 adjusted_returns['Market']=market_port
+#adjusted_returns.applymap(lambda x: (x / 100) + 1) #adjust for gross return in case necessary
 # %%
 #A.1 2 Mean, Variance and Correlation
+
 mean_size_value=adjusted_returns.mean()
 variance_size_value=adjusted_returns.var()
 corr_size_value=adjusted_returns.corr()
@@ -38,7 +40,7 @@ plt.show()
 # %%
 # A.1 3 Mean-variance frontier without riskless assets
 #mu
-def Mu(returns,rf=0.15):
+def Mu(returns,rf=0.0015):
     return returns.mean()+rf
 # lambda  
 def Lambda(returns, mu_targ):
@@ -240,6 +242,8 @@ t_statistic, p_value = stats.ttest_1samp(slope_df['Slope'], 0)
 
 
 #%%
+############################ A4 ################################
+#%%
 #A.4.1 PCA scree plot
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
@@ -247,10 +251,11 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-data_train=pd.read_csv('train.csv', index_col=None)
-y_train=data_train['target']
-X_train=data_train.drop(columns=['target'])
+data=data_returns.subtract(rf, axis=0)
+X_train=data[:int(len(data)/2)]
 
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X_train)
@@ -261,7 +266,7 @@ pca.fit(X_scaled)
 explained_variance_ratio = pca.explained_variance_ratio_
 cumulative_variance = np.cumsum(explained_variance_ratio)
 #Adjust for percentage of variance retained 
-confidence_level=0.9
+confidence_level=0.92
 plt.plot(range(1, len(cumulative_variance) + 1), cumulative_variance, marker='o')
 plt.xlabel('Number of Principal Components')
 plt.ylabel('Cumulative Explained Variance')
@@ -269,9 +274,36 @@ plt.axhline(y=confidence_level, color='r', linestyle='--')  # 90% threshold line
 plt.show()
 
 n_components = np.argmax(cumulative_variance >= confidence_level) + 1
-print(f'Number of components to retain 90% variance: {n_components}')
+print(f'Number of components to retain 92% variance: {n_components}')
 
-pca = PCA(n_components=n_components)
+
+#%%
+#A.4.2 PCA 3-factor model
+pca = PCA(n_components=3)
 principal_components = pca.fit_transform(X_scaled)
+loadings = pd.DataFrame(pca.components_.T, columns=['PC1', 'PC2', 'PC3'])
+loadings.index = X_train.columns  
+print(loadings)
+fig, axes = plt.subplots(1, 3, figsize=(18, 6), sharey=True)
+
+sns.barplot(ax=axes[0], x=loadings.index, y=loadings['PC1'])
+axes[0].set_title('PC1 Loadings')
+axes[0].set_xticklabels(loadings.index, rotation=90)
+
+sns.barplot(ax=axes[1], x=loadings.index, y=loadings['PC2'])
+axes[1].set_title('PC2 Loadings')
+axes[1].set_xticklabels(loadings.index, rotation=90)
+
+sns.barplot(ax=axes[2], x=loadings.index, y=loadings['PC3'])
+axes[2].set_title('PC3 Loadings')
+axes[2].set_xticklabels(loadings.index, rotation=90)
+plt.suptitle('Factor Loadings of Each Asset on the First 3 Principal Components')
+plt.tight_layout()
+plt.show()
+
 pca_df = pd.DataFrame(data=principal_components, columns= [f'PC{i+1}' for i in range(n_components)])
 print(pca_df)
+
+#%%
+#A.4.3 Fama French 3-factor model 
+
