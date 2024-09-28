@@ -306,15 +306,24 @@ print(pca_df)
 
 #%%
 #A.4.3 Fama French 3-factor model 
-
-
-
-
+fama_data=pd.read_excel('Data_Assignment_SMALLER.xlsx', sheet_name='FamaFrench Factors', index_col=None)
+fama_data.set_index('Date', inplace=True)
+fama_data=fama_data.drop(columns=['RF'])
+fama_train=fama_data[:int(len(fama_data)/2)]
+mean_fama=fama_train.mean()
+var_fama=fama_train.var()
+corr_fama=fama_train.corr()
+sp_fama=mean_fama/(var_fama**0.5)
+#%%
+#Statistical properties PCA factors
+mean_pca=pca_df.mean()
+var_fama=pca_df.var()
+corr_fama=pca_df.corr()
+sp_pca=mean_pca/(var_fama**0.5)
 
 #%% 
 #A.4.4 GRS 
 #GRS on PCA factors 
-
 X_test=data[int(len(data)/2):]
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X_test)
@@ -333,8 +342,8 @@ for i, var in enumerate(X_test.columns):
     alpha_hat.append(model.params['const'])
     residual_hat[:,i]=model.resid
 k=3
-T=data_returns.shape[0]
-n=data_returns.shape[1]
+T=X_test.shape[0]
+n=X_test.shape[1]
 sigma_hat=residual_hat.T@residual_hat/T
 alpha_hat=np.array(alpha_hat)
 factors=pca_test_df
@@ -343,5 +352,28 @@ var_fa=factors.cov()
 z=(T-n-k)*alpha_hat.T@np.linalg.inv(sigma_hat)@alpha_hat/(n*(1+mu_fa.T@np.linalg.inv(var_fa)@mu_fa))
 p_value=1-f.cdf(z,n,T-n-k)  
 
-
 #%%
+#GRS on FamaFrench 3 factors 
+X_test=data[int(len(data)/2):]
+fama_test=fama_data[int(len(fama_data)/2):]
+alpha_hat=list()
+residual_hat=np.zeros(X_test.shape)
+for i, var in enumerate(X_test.columns):
+    X=sm.add_constant(fama_test)
+    model=sm.OLS(X_test[var],X).fit()
+    print('Coefficient: \n', model.params)
+    print('Standard Error: \n', model.bse)
+    print('Residuals: \n', model.resid)
+    alpha_hat.append(model.params['const'])
+    residual_hat[:,i]=model.resid
+k=3
+T=X_test.shape[0]
+n=X_test.shape[1]
+sigma_hat=residual_hat.T@residual_hat/T
+alpha_hat=np.array(alpha_hat)
+factors=pca_test_df
+mu_fa=factors.mean()
+var_fa=factors.cov()
+z=(T-n-k)*alpha_hat.T@np.linalg.inv(sigma_hat)@alpha_hat/(n*(1+mu_fa.T@np.linalg.inv(var_fa)@mu_fa))
+p_value=1-f.cdf(z,n,T-n-k) 
+
