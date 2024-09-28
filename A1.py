@@ -377,3 +377,63 @@ var_fa=factors.cov()
 z=(T-n-k)*alpha_hat.T@np.linalg.inv(sigma_hat)@alpha_hat/(n*(1+mu_fa.T@np.linalg.inv(var_fa)@mu_fa))
 p_value=1-f.cdf(z,n,T-n-k) 
 
+################################## A5 #####################
+#%%
+#A.5.1 Realized volatility regression 
+rv_data=pd.read_excel('Data_Assignment_SMALLER.xlsx', sheet_name='Realized Volatility', index_col=None)
+rv_data.set_index('Date', inplace=True)
+
+adjusted_returns = data_returns.subtract(rf, axis=0)
+adjusted_returns['Market']=market_port
+adjusted_returns['RV']=rv_data
+
+#Time-series regression 
+beta_hat=list()
+residual_hat=np.zeros(data_returns.shape)
+for i, var in enumerate(adjusted_returns.columns[:-2]):
+    X=sm.add_constant(adjusted_returns[['Market','RV']])
+    model=sm.OLS(adjusted_returns[var],X).fit()
+    print('Coefficient: \n', model.params)
+    print('Standard Error: \n', model.bse)
+    print('Residuals: \n', model.resid)
+    beta_hat.append([model.params['Market'],model.params['RV']])
+    residual_hat[:,i]=model.resid
+beta_hat_df=pd.DataFrame(beta_hat, columns=['Market','RV'])
+beta_hat_df.index=adjusted_returns.columns[:-2]
+# %%
+#A.5.2 
+average_excess_returns=adjusted_returns.drop(columns=['Market', 'RV']).mean()
+avg_and_beta_df=beta_hat_df
+avg_and_beta_df['Average excess return']=average_excess_returns
+
+#%%
+#OLS
+X=avg_and_beta_df[['Market','RV']]
+model=sm.OLS(avg_and_beta_df['Average excess return'],X).fit()
+print('Coefficient: \n', model.params)
+print('Standard Error: \n', model.bse)
+print('Residuals: \n', model.resid)
+lambda_ols=np.array(model.params)
+#%%
+#GLS 
+sigma_hat=residual_hat.T@residual_hat/len(residual_hat) #from time-series regression
+model=sm.GLS(avg_and_beta_df['Average excess return'],X, sigma=sigma_hat).fit()
+print('Coefficient: \n', model.params)
+print('Standard Error: \n', model.bse)
+print('Residuals: \n', model.resid)
+alpha_hat_GLS=np.array(model.resid)
+lambda_gls=np.array(model.params)
+# %%
+#Testing OLS
+T=len(residual_hat)
+k=2
+sigma_f=beta_hat_df[['Market','RV']].cov()
+J_ols=T*(1/(1+lambda_ols.T@np.linalg.inv(sigma_f)@lambda_ols))*alpha_hat_GLS.T@np.linalg.inv(sigma_hat)@alpha_hat_GLS
+p_value = stats.chi2.sf(J_ols,T-k)
+
+#%%
+#Testing GLS
+J_gls=T*(1/(1+lambda_gls.T@np.linalg.inv(sigma_f)@lambda_gls))*alpha_hat_GLS.T@np.linalg.inv(sigma_hat)@alpha_hat_GLS
+p_value = stats.chi2.sf(J_gls,T-k)
+
+# %%
