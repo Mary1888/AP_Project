@@ -307,3 +307,41 @@ print(pca_df)
 #%%
 #A.4.3 Fama French 3-factor model 
 
+
+
+
+
+#%% 
+#A.4.4 GRS 
+#GRS on PCA factors 
+
+X_test=data[int(len(data)/2):]
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X_test)
+pca = PCA(n_components=3)
+pc_test = pca.fit_transform(X_scaled)
+pca_test_df = pd.DataFrame(data=pc_test, columns= [f'PC{i+1}' for i in range(n_components)])
+pca_test_df.index=X_test.index
+alpha_hat=list()
+residual_hat=np.zeros(X_test.shape)
+for i, var in enumerate(X_test.columns):
+    X=sm.add_constant(pca_test_df[['PC1','PC2','PC3']])
+    model=sm.OLS(X_test[var],X).fit()
+    print('Coefficient: \n', model.params)
+    print('Standard Error: \n', model.bse)
+    print('Residuals: \n', model.resid)
+    alpha_hat.append(model.params['const'])
+    residual_hat[:,i]=model.resid
+k=3
+T=data_returns.shape[0]
+n=data_returns.shape[1]
+sigma_hat=residual_hat.T@residual_hat/T
+alpha_hat=np.array(alpha_hat)
+factors=pca_test_df
+mu_fa=factors.mean()
+var_fa=factors.cov()
+z=(T-n-k)*alpha_hat.T@np.linalg.inv(sigma_hat)@alpha_hat/(n*(1+mu_fa.T@np.linalg.inv(var_fa)@mu_fa))
+p_value=1-f.cdf(z,n,T-n-k)  
+
+
+#%%
