@@ -301,9 +301,6 @@ plt.suptitle('Factor Loadings of Each Asset on the First 3 Principal Components'
 plt.tight_layout()
 plt.show()
 
-pca_df = pd.DataFrame(data=principal_components, columns= [f'PC{i+1}' for i in range(n_components)])
-print(pca_df)
-
 #%%
 #A.4.3 Fama French 3-factor model 
 fama_data=pd.read_excel('Data_Assignment_SMALLER.xlsx', sheet_name='FamaFrench Factors', index_col=None)
@@ -316,20 +313,19 @@ corr_fama=fama_train.corr()
 sp_fama=mean_fama/(var_fama**0.5)
 #%%
 #Statistical properties PCA factors
+pca_df = X_train@loadings
+print(pca_df)
 mean_pca=pca_df.mean()
-var_fama=pca_df.var()
-corr_fama=pca_df.corr()
-sp_pca=mean_pca/(var_fama**0.5)
+var_pca=pca_df.var()
+corr_pca=pca_df.corr()
+sp_pca=mean_pca/(var_pca**0.5)
+
 
 #%% 
 #A.4.4 GRS 
 #GRS on PCA factors 
 X_test=data[int(len(data)/2):]
-scaler = StandardScaler()
-X_scaled = scaler.fit_transform(X_test)
-pca = PCA(n_components=3)
-pc_test = pca.fit_transform(X_scaled)
-pca_test_df = pd.DataFrame(data=pc_test, columns= [f'PC{i+1}' for i in range(n_components)])
+pca_test_df = X_test@loadings
 pca_test_df.index=X_test.index
 alpha_hat=list()
 residual_hat=np.zeros(X_test.shape)
@@ -386,7 +382,6 @@ rv_data.set_index('Date', inplace=True)
 adjusted_returns = data_returns.subtract(rf, axis=0)
 adjusted_returns['Market']=market_port
 adjusted_returns['RV']=rv_data
-
 #Time-series regression 
 beta_hat=list()
 residual_hat=np.zeros(data_returns.shape)
@@ -400,12 +395,11 @@ for i, var in enumerate(adjusted_returns.columns[:-2]):
     residual_hat[:,i]=model.resid
 beta_hat_df=pd.DataFrame(beta_hat, columns=['Market','RV'])
 beta_hat_df.index=adjusted_returns.columns[:-2]
-# %%
+#%%
 #A.5.2 
 average_excess_returns=adjusted_returns.drop(columns=['Market', 'RV']).mean()
 avg_and_beta_df=beta_hat_df
 avg_and_beta_df['Average excess return']=average_excess_returns
-
 #%%
 #OLS
 X=avg_and_beta_df[['Market','RV']]
@@ -414,6 +408,8 @@ print('Coefficient: \n', model.params)
 print('Standard Error: \n', model.bse)
 print('Residuals: \n', model.resid)
 lambda_ols=np.array(model.params)
+pricing_error_ols=model.resid
+
 #%%
 #GLS 
 sigma_hat=residual_hat.T@residual_hat/len(residual_hat) #from time-series regression
@@ -422,18 +418,18 @@ print('Coefficient: \n', model.params)
 print('Standard Error: \n', model.bse)
 print('Residuals: \n', model.resid)
 alpha_hat_GLS=np.array(model.resid)
+pricing_error_gls=model.resid
 lambda_gls=np.array(model.params)
-# %%
+#%%
 #Testing OLS
 T=len(residual_hat)
 k=2
 sigma_f=beta_hat_df[['Market','RV']].cov()
 J_ols=T*(1/(1+lambda_ols.T@np.linalg.inv(sigma_f)@lambda_ols))*alpha_hat_GLS.T@np.linalg.inv(sigma_hat)@alpha_hat_GLS
 p_value = stats.chi2.sf(J_ols,T-k)
-
 #%%
 #Testing GLS
 J_gls=T*(1/(1+lambda_gls.T@np.linalg.inv(sigma_f)@lambda_gls))*alpha_hat_GLS.T@np.linalg.inv(sigma_hat)@alpha_hat_GLS
 p_value = stats.chi2.sf(J_gls,T-k)
-
-# %%
+#%%
+#A.5.3 OLS and GLS pricing errors 
