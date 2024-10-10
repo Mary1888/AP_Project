@@ -313,15 +313,33 @@ plt.tight_layout()
 plt.show()
 
 #%%
+data_small=data_returns.loc[:, data_returns.columns.str.contains('SMALL')].mean(axis=1)
+data_big=data_returns.loc[:, data_returns.columns.str.contains('BIG')].mean(axis=1)
+smb=data_small-data_big
+data_high=data_returns.loc[:, data_returns.columns.str.contains('HiBM')].mean(axis=1)
+data_low=data_returns.loc[:, data_returns.columns.str.contains('LoBM')].mean(axis=1)
+hml=data_high-data_low
+
+
+#%%
 #A.4.3 Fama French 3-factor model 
 fama_data=pd.read_excel('Data_Assignment_SMALLER.xlsx', sheet_name='FamaFrench Factors', index_col=None)
 fama_data.set_index('Date', inplace=True)
-fama_data=fama_data.drop(columns=['RF'])
+data_small=data_returns.loc[:, data_returns.columns.str.contains('SMALL')].mean(axis=1)
+data_big=data_returns.loc[:, data_returns.columns.str.contains('BIG')].mean(axis=1)
+smb=data_small-data_big
+data_high=data_returns.loc[:, data_returns.columns.str.contains('HiBM')].mean(axis=1)
+data_low=data_returns.loc[:, data_returns.columns.str.contains('LoBM')].mean(axis=1)
+hml=data_high-data_low
+fama_data=fama_data.drop(columns=['RF','SMB','HML'])
+fama_data['SMB']=smb
+fama_data['HML']=hml
 fama_train=fama_data[:int(len(fama_data)/2)]
 mean_fama=fama_train.mean()
 var_fama=fama_train.var()
 corr_fama=fama_train.corr()
 sp_fama=mean_fama/(var_fama**0.5)
+
 #%%
 #Statistical properties PCA factors
 pca_df = X_train@loadings
