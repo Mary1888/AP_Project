@@ -40,7 +40,7 @@ plt.show()
 # %%
 # A.1 3 Mean-variance frontier without riskless assets
 #mu
-def Mu(returns,rf=0.0015):
+def Mu(returns,rf=0.15):
     return returns.mean()+rf
 # lambda  
 def Lambda(returns, mu_targ):
@@ -92,8 +92,14 @@ for mu_targ in values_targ:
     
 # %%
 #Plotting mean-variance frontier
+mu_gmv=pi_gmv(adjusted_returns).T@Mu(adjusted_returns)
+std_gmv=(pi_gmv(adjusted_returns).T@adjusted_returns.cov()@pi_gmv(adjusted_returns))**0.5
+mu_mu=pi_mu(adjusted_returns).T@Mu(adjusted_returns)
+std_mu=(pi_mu(adjusted_returns).T@adjusted_returns.cov()@pi_mu(adjusted_returns))**0.5
 plt.figure(figsize=(10, 6)) 
 plt.plot(vol_mv, mu_mv, color='blue', linestyle='-')
+plt.scatter(std_gmv,mu_gmv, color='r',marker='o', s=100, label='GMV portfolio')
+plt.scatter(std_mu,mu_mu, color='b',marker='o', s=100, label='Pi-Mu portfolio')
 plt.title('Mean-variance frontier without riskless assets')
 plt.xlabel('volatility')
 plt.ylabel('mu')
@@ -129,10 +135,15 @@ vol_tang=(pi_tang(adjusted_returns).T@adjusted_returns.cov()@pi_tang(adjusted_re
 
 # %%
 #Plotting mean-variance frontier
+mu_market=adjusted_returns['Market'].mean()
+vol_market=adjusted_returns['Market'].var()**0.5
 plt.figure(figsize=(10, 6)) 
 plt.plot(vol_mv, mu_mv, color='blue', linestyle='-')
 plt.plot(vol_riskless_mv, mu_riskless_mv, color='red', linestyle='-')
 plt.scatter(vol_tang,mu_tang, color='g',marker='o', s=100, label='Tangency portfolios')
+plt.scatter(vol_market,mu_market, color='black',marker='o', s=100, label='Market portfolio')
+plt.scatter(std_gmv,mu_gmv, color='r',marker='o', s=100, label='GMV portfolio')
+plt.scatter(std_mu,mu_mu, color='b',marker='o', s=100, label='Pi-Mu portfolio')
 plt.title('Mean-variance frontier with riskless assets')
 plt.xlabel('volatility')
 plt.ylabel('mu')
@@ -433,3 +444,4 @@ J_gls=T*(1/(1+lambda_gls.T@np.linalg.inv(sigma_f)@lambda_gls))*alpha_hat_GLS.T@n
 p_value = stats.chi2.sf(J_gls,T-k)
 #%%
 #A.5.3 OLS and GLS pricing errors 
+pricing_error_gls
