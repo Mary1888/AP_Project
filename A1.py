@@ -37,6 +37,9 @@ corr_size_value=adjusted_returns.corr()
 plt.figure(figsize=(8, 6))
 seaborn.heatmap(corr_size_value, annot=False, cmap='YlGnBu')
 plt.show()
+
+#%%
+mean_size_value
 # %%
 # A.1 3 Mean-variance frontier without riskless assets
 #mu
@@ -130,7 +133,7 @@ for mu_targ in values_targ:
     mu_riskless_mv.append(mu)
     vol_riskless_mv.append(std)
    
-mu_tang=pi_tang(adjusted_returns)@Mu(adjusted_returns)
+mu_tang=pi_tang(adjusted_returns)@Mu(adjusted_returns,0)+0.15
 vol_tang=(pi_tang(adjusted_returns).T@adjusted_returns.cov()@pi_tang(adjusted_returns))**0.5
 
 # %%
@@ -185,6 +188,7 @@ size_data.set_index('Date', inplace=True)
 size_port=size_data['Lo 10']-size_data['Hi 10']
 mean_SMB=size_port.mean()
 var_SMB=size_port.var()
+
 #%%
 #A.2.2 Regression 
 adjusted_returns['SMB']=size_port
@@ -312,13 +316,6 @@ plt.suptitle('Factor Loadings of Each Asset on the First 3 Principal Components'
 plt.tight_layout()
 plt.show()
 
-#%%
-data_small=data_returns.loc[:, data_returns.columns.str.contains('SMALL')].mean(axis=1)
-data_big=data_returns.loc[:, data_returns.columns.str.contains('BIG')].mean(axis=1)
-smb=data_small-data_big
-data_high=data_returns.loc[:, data_returns.columns.str.contains('HiBM')].mean(axis=1)
-data_low=data_returns.loc[:, data_returns.columns.str.contains('LoBM')].mean(axis=1)
-hml=data_high-data_low
 
 
 #%%
@@ -440,8 +437,18 @@ lambda_ols=np.array(model.params)
 pricing_error_ols=model.resid
 
 #%%
+#standard error of risk premia and t-test 
+beta_hat=np.array(beta_hat)
+sigma_f=adjusted_returns[['Market','RV']].cov()
+shanken_ols=(1+lambda_ols.T@np.linalg.inv(sigma_f)@lambda_ols)
+se_ols=np.sqrt(np.diag((np.linalg.inv(beta_hat.T@beta_hat)@beta_hat.T@sigma_hat@beta_hat@np.linalg.inv(beta_hat.T@beta_hat)*shanken_ols+sigma_f)/T))/5
+dof=25-2
+t_stats=abs(lambda_ols[1])/np.array(se_ols)[1]
+p_value = (1-stats.t.cdf(t_stats, dof))*2
+
+#%%
 #GLS 
-sigma_hat=residual_hat.T@residual_hat/len(residual_hat) #from time-series regression
+sigma_hat=residual_hat.T@residual_hat/(len(residual_hat)-2) #from time-series regression
 model=sm.GLS(avg_and_beta_df['Average excess return'],X, sigma=sigma_hat).fit()
 print('Coefficient: \n', model.params)
 print('Standard Error: \n', model.bse)
@@ -450,16 +457,35 @@ alpha_hat_GLS=np.array(model.resid)
 pricing_error_gls=model.resid
 lambda_gls=np.array(model.params)
 #%%
+#standard error of risk premia and t-test 
+sigma_f=adjusted_returns[['Market','RV']].cov()
+shanken_gls=(1+lambda_gls.T@np.linalg.inv(sigma_f)@lambda_gls)
+se_gls=model.bse*(shanken_gls**0.5)
+dof=25-2
+#%%
+beta_hat=np.array(beta_hat)
+se_gls=np.sqrt(np.diag((np.linalg.inv(beta_hat.T@np.linalg.inv(sigma_hat)@beta_hat)*shanken_gls+sigma_f)/T))/5
+t_stats=abs(lambda_gls[0])/np.array(se_gls)[0]
+p_value = (1-stats.t.cdf(t_stats, dof))*2
+#%%
+#A.5.3 OLS and GLS pricing errors 
+# pricing error and standard errors 
+sigma_f=adjusted_returns[['Market','RV']].cov()
+beta_hat=beta_hat_df[['Market','RV']].to_numpy()
+variance_ols=(sigma_hat+beta_hat@sigma_f@beta_hat.T)/25
+variance_gls=(sigma_hat-beta_hat@np.linalg.inv(beta_hat.T@np.linalg.inv(sigma_hat)@beta_hat)@beta_hat.T)*(1+lambda_gls.T@np.linalg.inv(sigma_f)@lambda_gls)/25
+standard_error_ols=np.sqrt(np.diag(variance_ols))/5
+standard_error_gls=np.sqrt(np.diag(variance_gls))/5
+standard_error_gls
+
+#%%
 #Testing OLS
 T=len(residual_hat)
+n=25
 k=2
-sigma_f=beta_hat_df[['Market','RV']].cov()
 J_ols=T*(1/(1+lambda_ols.T@np.linalg.inv(sigma_f)@lambda_ols))*alpha_hat_GLS.T@np.linalg.inv(sigma_hat)@alpha_hat_GLS
-p_value = stats.chi2.sf(J_ols,T-k)
+p_value = stats.chi2.sf(J_ols,n-k)
 #%%
 #Testing GLS
 J_gls=T*(1/(1+lambda_gls.T@np.linalg.inv(sigma_f)@lambda_gls))*alpha_hat_GLS.T@np.linalg.inv(sigma_hat)@alpha_hat_GLS
-p_value = stats.chi2.sf(J_gls,T-k)
-#%%
-#A.5.3 OLS and GLS pricing errors 
-pricing_error_gls
+p_value = stats.chi2.sf(J_gls,n-k)
